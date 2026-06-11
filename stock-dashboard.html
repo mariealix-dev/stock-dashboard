@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord — Stocks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --border: #E8E4DC;
+    --border-strong: #C8C4BA;
+    --text: #1A1916;
+    --text-muted: #6B6760;
+    --text-hint: #A09D97;
+    --accent: #2D5A3D;
+    --accent-light: #EAF2EC;
+    --amber: #8B5E1A;
+    --amber-light: #FDF3E3;
+    --red: #8B2020;
+    --red-light: #FDEAEA;
+    --blue: #1A3D6B;
+    --blue-light: #E8EFF8;
+    --purple: #4A2D7A;
+    --purple-light: #F0EBF8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .role-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+  }
+  .btn-sync {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity .15s;
+  }
+  .btn-sync:hover { opacity: .85; }
+  .btn-sync.loading { opacity: .6; pointer-events: none; }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: calc(100vh - 56px); }
+
+  /* ── SIDEBAR ── */
+  nav {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+  .nav-section { margin-bottom: 1.5rem; }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-hint);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 0 1.25rem;
+    margin-bottom: 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 1.25rem;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all .1s;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red-light);
+    color: var(--red);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  /* ── MAIN ── */
+  main { flex: 1; padding: 2rem; overflow-x: hidden; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+  }
+  .page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── ALERTS ── */
+  .alert-strip {
+    background: var(--amber-light);
+    border: 1px solid #E8C97A;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .alert-strip.danger { background: var(--red-light); border-color: #E8AAAA; color: var(--red); }
+
+  /* ── METRICS ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.75rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.125rem;
+  }
+  .metric-label { font-size: 11px; color: var(--text-hint); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--text); }
+  .metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .metric.warn .metric-value { color: var(--amber); }
+  .metric.danger .metric-value { color: var(--red); }
+  .metric.accent .metric-value { color: var(--accent); }
+
+  /* ── CARD / TABLE ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-body { padding: 0; }
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-hint);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    background: #FAFAF8;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFAF8; }
+  .cell-mono { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--text-muted); }
+  .cell-strong { font-weight: 600; }
+
+  /* ── CHIPS ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .chip-ok { background: var(--accent-light); color: var(--accent); }
+  .chip-warn { background: var(--amber-light); color: var(--amber); }
+  .chip-danger { background: var(--red-light); color: var(--red); }
+  .chip-blue { background: var(--blue-light); color: var(--blue); }
+  .chip-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all .1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn:hover { background: var(--bg); color: var(--text); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { opacity: .87; background: var(--accent); color: white; }
+
+  /* ── PRESTAS GRID ── */
+  .presta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 1.25rem; }
+  .presta-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .presta-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .presta-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .presta-row:last-child { border-bottom: none; }
+  .presta-val { font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .presta-sub { font-size: 11px; color: var(--text-hint); margin-top: 6px; text-align: right; }
+
+  /* ── MODAL ── */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20,18,14,.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 1.25rem; color: var(--text); }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .1s;
+  }
+  .form-row input:focus, .form-row select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--text);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all .25s;
+    z-index: 999;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── SETUP SCREEN ── */
+  .setup-screen {
+    max-width: 560px;
+    margin: 3rem auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+  }
+  .setup-screen h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; letter-spacing: -.02em; }
+  .setup-screen p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.25rem; }
+  .setup-steps { counter-reset: step; margin-bottom: 1.5rem; }
+  .setup-step { display: flex; gap: 12px; margin-bottom: 1rem; }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent-light); color: var(--accent);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-content { font-size: 13px; color: var(--text); line-height: 1.55; }
+  .step-content code {
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 5px;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  .setup-screen .form-row { margin-bottom: 14px; }
+  .url-hint { font-size: 11px; color: var(--text-hint); margin-top: 4px; }
+
+  /* ── CONNEXION STATUS ── */
+  .conn-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .conn-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border-strong);
+  }
+  .conn-dot.ok { background: #3A9B5C; }
+  .conn-dot.err { background: var(--red); }
+
+  /* ── SEUIL INLINE ── */
+  .seuil-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); padding: .75rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .seuil-row input { width: 70px; font-size: 12px; padding: 3px 6px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 720px) {
+    nav { display: none; }
+    main { padding: 1rem; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .presta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-dot"></div> Stock Dashboard</div>
+  <div class="header-right">
+    <div class="conn-status">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label">Non connecté</span>
+    </div>
+    <span class="role-badge" id="role-display">—</span>
+    <button class="btn-sync" id="btn-sync" onclick="syncAll()">↻ Actualiser</button>
+    <button class="btn" onclick="openSetup()">⚙ Config</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Vue d'ensemble</div>
+      <div class="nav-item active" onclick="goTo('overview',this)"><span class="nav-icon">◈</span> Tableau de bord</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Matière première</div>
+      <div class="nav-item" onclick="goTo('tubercules',this)"><span class="nav-icon">✿</span> Tubercules Pérou</div>
+      <div class="nav-item" onclick="goTo('sirop-usine',this)"><span class="nav-icon">⬡</span> Sirop — Usine</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Logistique</div>
+      <div class="nav-item" onclick="goTo('transit',this)"><span class="nav-icon">→</span> En transit</div>
+      <div class="nav-item" onclick="goTo('douanes',this)" id="nav-douanes"><span class="nav-icon">⊡</span> Douanes</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Prestataires</div>
+      <div class="nav-item" onclick="goTo('prestas',this)"><span class="nav-icon">○</span> VRAC Prestas</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Produits finis</div>
+      <div class="nav-item" onclick="goTo('crosslog',this)"><span class="nav-icon">▷</span> Crosslog (E-com)</div>
+      <div class="nav-item" onclick="goTo('idlog',this)"><span class="nav-icon">▷</span> ID Log</div>
+      <div class="nav-item" onclick="goTo('gms',this)"><span class="nav-icon">▷</span> GMS</div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-page" class="page active">
+      <div class="setup-screen">
+        <h2>Connexion au Google Sheet</h2>
+        <p>Ce tableau de bord se connecte à un Google Sheet partagé. Toutes les modifications sont visibles par tous en temps réel.</p>
+        <div class="setup-steps">
+          <div class="setup-step"><div class="step-num">1</div><div class="step-content">Crée un nouveau <strong>Google Sheet</strong> sur <a href="https://sheets.google.com" target="_blank" style="color:var(--accent)">sheets.google.com</a></div></div>
+          <div class="setup-step"><div class="step-num">2</div><div class="step-content">Dans le Sheet, va dans <strong>Extensions → Apps Script</strong> et colle le script fourni ci-dessous</div></div>
+          <div class="setup-step"><div class="step-num">3</div><div class="step-content">Dans Apps Script, clique <strong>Déployer → Nouveau déploiement</strong>, type <em>Application Web</em>, accès <em>Tout le monde</em>. Copie l'URL de déploiement.</div></div>
+          <div class="setup-step"><div class="step-num">4</div><div class="step-content">Colle l'URL ci-dessous et choisis ton rôle.</div></div>
+        </div>
+        <div class="form-row">
+          <label>URL Apps Script (déploiement)</label>
+          <input type="url" id="setup-url" placeholder="https://script.google.com/macros/s/…/exec">
+          <div class="url-hint">L'URL commence par https://script.google.com/macros/s/</div>
+        </div>
+        <div class="form-row">
+          <label>Ton rôle</label>
+          <select id="setup-role">
+            <option value="admin">Admin (accès complet)</option>
+            <option value="tgf">Fournisseur — The Good Food</option>
+            <option value="carapack">Fournisseur — Carapack</option>
+            <option value="noiseraie">Fournisseur — Noiseraie</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Prénom / identifiant</label>
+          <input type="text" id="setup-name" placeholder="ex: Sophie">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:1.25rem;">
+          <button class="btn-primary btn" onclick="saveConfig()">Se connecter</button>
+          <button class="btn" onclick="showScriptCode()">Voir le script Apps Script</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCRIPT CODE MODAL (shown inline) -->
+    <div id="script-modal" class="modal-backdrop">
+      <div class="modal-box" style="max-width:680px">
+        <div class="modal-title">Script Google Apps Script — à coller dans ton Sheet</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Extensions → Apps Script → colle ce code → Déployer → Nouveau déploiement → App Web → Tout le monde</p>
+        <textarea id="script-code-display" style="width:100%;height:340px;font-family:'DM Mono',monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;resize:none;color:var(--text)" readonly></textarea>
+        <div class="form-actions">
+          <button class="btn" onclick="copyScript()">Copier le script</button>
+          <button class="btn-primary btn" onclick="closeScriptModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div id="overview" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Vue d'ensemble</div><div class="page-sub" id="last-sync-label">—</div></div>
+      </div>
+      <div id="global-alerts"></div>
+      <div class="metrics" id="overview-metrics"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div class="card">
+          <div class="card-head"><div class="card-title">✿ Tubercules Pérou</div></div>
+          <div class="card-body"><div id="ov-tubercules" style="padding:1rem;font-size:13px;color:var(--text-muted)">Chargement…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">⬡ Sirop en circulation</div></div>
+          <div class="card-body"><div id="ov-sirop" style="padding:1rem;font-size:13px;color:var(--text-muted)">Chargement…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TUBERCULES -->
+    <div id="tubercules" class="page">
+      <div class="page-header">
+        <div><div class="page-title">✿ Tubercules — Pérou</div><div class="page-sub">Stock brut + sirop extractible estimé (facteur 0,65 × BRIX)</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-tuber')" id="btn-add-tuber">+ Ajouter un lot</button>
+      </div>
+      <div id="alerts-tuber"></div>
+      <div class="card">
+        <div class="card-body tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Lot</th><th>Localisation</th><th>Qté (kg)</th><th>BRIX %</th>
+              <th>Sirop extrait. (kg)</th><th>Réception</th><th>Péremption</th><th>Statut</th>
+            </tr></thead>
+            <tbody id="tb-tuber"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIROP USINE -->
+    <div id="sirop-usine" class="page">
+      <div class="page-header">
+        <div><div class="page-title">⬡ Sirop — Usine</div><div class="page-sub">Stocks disponibles sur site de production</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-usine')" id="btn-add-usine">+ Ajouter un lot</button>
+      </div>
+      <div id="alerts-usine"></div>
+      <div class="card">
+        <div class="seuil-row">
+          Alerte si stock total &lt; <input type="number" id="seuil-usine" value="500" min="0" onchange="renderAll()"> kg
+        </div>
+        <div class="card-body tbl-wrap">
+          <table>
+            <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Date production</th><th>Origine</th><th>Statut</th></tr></thead>
+            <tbody id="tb-usine"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSIT -->
+    <div id="transit" class="page">
+      <div class="page-header">
+        <div><div class="page-title">→ Sirop en transit</div><div class="page-sub">Lots en cours d'acheminement</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-transit')" id="btn-add-transit">+ Ajouter</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap"><table>
+        <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Départ</th><th>Arrivée est.</th><th>Transporteur</th><th>Statut</th></tr></thead>
+        <tbody id="tb-transit"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- DOUANES -->
+    <div id="douanes" class="page">
+      <div class="page-header">
+        <div><div class="page-title">⊡ Sirop bloqué — Douanes</div><div class="page-sub">Lots en attente de dédouanement</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-douanes')" id="btn-add-douanes">+ Ajouter</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap"><table>
+        <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Bloqué le</th><th>Pays</th><th>Motif</th><th>Jours bloqués</th></tr></thead>
+        <tbody id="tb-douanes"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- PRESTAS -->
+    <div id="prestas" class="page">
+      <div class="page-header">
+        <div><div class="page-title">○ VRAC chez les prestataires</div><div class="page-sub">The Good Food · Carapack · Noiseraie — avec conversion en unités</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-presta')" id="btn-add-presta">↑ Mettre à jour</button>
+      </div>
+      <div class="card">
+        <div class="card-head" style="border-bottom:none"><div class="card-title" style="font-size:11px;color:var(--text-hint);font-weight:400">Conversions : The Good Food &amp; Carapack — 1 squeeze = 235 g &nbsp;·&nbsp; Noiseraie — 1 pot = 220 g</div></div>
+        <div class="presta-grid" id="prestas-grid"></div>
+      </div>
+    </div>
+
+    <!-- CROSSLOG -->
+    <div id="crosslog" class="page">
+      <div class="page-header">
+        <div><div class="page-title">▷ E-commerce — Crosslog</div><div class="page-sub">Stock disponible pour les commandes en ligne</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-sku','crosslog')">+ Ajouter un SKU</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap"><table>
+        <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
+        <tbody id="tb-crosslog"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- IDLOG -->
+    <div id="idlog" class="page">
+      <div class="page-header">
+        <div><div class="page-title">▷ ID Log — Tous SKUs</div><div class="page-sub">Ensemble des références en stock logistique</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-sku','idlog')">+ Ajouter un SKU</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap"><table>
+        <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
+        <tbody id="tb-idlog"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- GMS -->
+    <div id="gms" class="page">
+      <div class="page-header">
+        <div><div class="page-title">▷ GMS — Produits phares</div><div class="page-sub">Références disponibles pour la grande distribution</div></div>
+        <button class="btn btn-primary" onclick="openModal('m-sku','gms')">+ Ajouter un SKU</button>
+      </div>
+      <div class="card"><div class="card-body tbl-wrap"><table>
+        <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
+        <tbody id="tb-gms"></tbody>
+      </table></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="m-tuber">
+  <div class="modal-box"><div class="modal-title">✿ Nouveau lot de tubercules</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Lot</label><input type="text" id="t-lot" placeholder="LOT-PER-003"></div>
+      <div class="form-row"><label>Localisation</label><input type="text" id="t-loc" placeholder="Lima"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Quantité (kg)</label><input type="number" id="t-qty" min="0"></div>
+      <div class="form-row"><label>BRIX (%)</label><input type="number" id="t-brix" min="0" max="100" step="0.1"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Réception</label><input type="date" id="t-rec"></div>
+      <div class="form-row"><label>Péremption</label><input type="date" id="t-exp"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-tuber')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('tubercules')">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-usine">
+  <div class="modal-box"><div class="modal-title">⬡ Nouveau lot sirop usine</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Lot</label><input type="text" id="u-lot" placeholder="SIROP-USI-001"></div>
+      <div class="form-row"><label>Volume (kg)</label><input type="number" id="u-vol" min="0"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Date production</label><input type="date" id="u-prod"></div>
+      <div class="form-row"><label>Origine tubercule</label><input type="text" id="u-ori" placeholder="LOT-PER-001"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-usine')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('usine')">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-transit">
+  <div class="modal-box"><div class="modal-title">→ Lot en transit</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Lot</label><input type="text" id="tr-lot" placeholder="TRANSIT-001"></div>
+      <div class="form-row"><label>Volume (kg)</label><input type="number" id="tr-vol" min="0"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Date départ</label><input type="date" id="tr-dep"></div>
+      <div class="form-row"><label>Arrivée estimée</label><input type="date" id="tr-arr"></div>
+    </div>
+    <div class="form-row"><label>Transporteur</label><input type="text" id="tr-trans" placeholder="CMA-CGM, DHL…"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-transit')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('transit')">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-douanes">
+  <div class="modal-box"><div class="modal-title">⊡ Lot bloqué en douanes</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Lot</label><input type="text" id="d-lot" placeholder="DOUANE-001"></div>
+      <div class="form-row"><label>Volume (kg)</label><input type="number" id="d-vol" min="0"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Bloqué le</label><input type="date" id="d-date"></div>
+      <div class="form-row"><label>Pays</label><input type="text" id="d-pays" placeholder="France"></div>
+    </div>
+    <div class="form-row"><label>Motif / note</label><input type="text" id="d-motif" placeholder="Contrôle phytosanitaire…"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-douanes')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('douanes')">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-presta">
+  <div class="modal-box"><div class="modal-title">○ Mettre à jour stock VRAC</div>
+    <div class="form-row"><label>Prestataire</label>
+      <select id="pr-name">
+        <option value="The Good Food">The Good Food</option>
+        <option value="Carapack">Carapack</option>
+        <option value="Noiseraie">Noiseraie</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>VRAC bio (kg)</label><input type="number" id="pr-bio" min="0" value="0"></div>
+      <div class="form-row"><label>VRAC non-bio (kg)</label><input type="number" id="pr-nonbio" min="0" value="0"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-presta')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('presta')">Mettre à jour</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="m-sku">
+  <div class="modal-box"><div class="modal-title" id="sku-modal-title">Nouveau SKU</div>
+    <input type="hidden" id="sku-dest">
+    <div class="form-grid">
+      <div class="form-row"><label>Code SKU</label><input type="text" id="sku-code" placeholder="SKU-001"></div>
+      <div class="form-row"><label>Désignation</label><input type="text" id="sku-label" placeholder="Squeeze bio 235g"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Qté disponible</label><input type="number" id="sku-qty" min="0"></div>
+      <div class="form-row"><label>Seuil d'alerte</label><input type="number" id="sku-seuil" min="0" placeholder="100"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('m-sku')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('sku')">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG & STATE
+// ══════════════════════════════════════════════
+const FACTEUR = 0.65;
+const SQUEEZE_G = 0.235;
+const POT_G = 0.220;
+
+let config = JSON.parse(localStorage.getItem('stock_config') || '{}');
+let data = {
+  tubercules: [], usine: [], transit: [], douanes: [],
+  prestas: { 'The Good Food': {bio:0,nonbio:0}, Carapack: {bio:0,nonbio:0}, Noiseraie: {bio:0,nonbio:0} },
+  skus: { crosslog: [], idlog: [], gms: [] }
+};
+
+// ══════════════════════════════════════════════
+//  APPS SCRIPT CODE
+// ══════════════════════════════════════════════
+const APPS_SCRIPT = `
+const SHEET_NAME = 'StockData';
+
+function doGet(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.getRange(1,1).setValue('{}');
+    }
+    const val = sheet.getRange(1,1).getValue();
+    const result = val ? JSON.parse(val) : {};
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true, data: result}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false, error: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+    sheet.getRange(1,1).setValue(JSON.stringify(payload));
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false, error: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+`.trim();
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function goTo(pageId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function openSetup() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('setup-page').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function init() {
+  if (config.url && config.role) {
+    applyRole();
+    goTo('overview', document.querySelector('.nav-item'));
+    syncAll();
+  }
+  if (config.url) document.getElementById('setup-url').value = config.url;
+  if (config.role) document.getElementById('setup-role').value = config.role;
+  if (config.name) document.getElementById('setup-name').value = config.name;
+}
+
+function applyRole() {
+  const role = config.role || 'admin';
+  const name = config.name || role;
+  document.getElementById('role-display').textContent = name;
+
+  const isAdmin = role === 'admin';
+  const isTGF = role === 'tgf';
+  const isCarapack = role === 'carapack';
+  const isNoiseraie = role === 'noiseraie';
+  const isPresta = isTGF || isCarapack || isNoiseraie;
+
+  if (isPresta) {
+    // Cacher les sections non pertinentes pour un presta
+    document.getElementById('sidebar').querySelectorAll('.nav-section').forEach((sec, i) => {
+      if (i !== 3) sec.style.opacity = '0.35'; // garde seulement "Prestataires"
+    });
+    // Pré-sélectionner le bon presta dans le modal
+    const prNames = {tgf:'The Good Food', carapack:'Carapack', noiseraie:'Noiseraie'};
+    const sel = document.getElementById('pr-name');
+    if (sel) sel.value = prNames[role];
+  }
+
+  // Cacher les boutons add/edit pour les prestas (sauf leur section)
+  if (isPresta) {
+    ['btn-add-tuber','btn-add-usine','btn-add-transit','btn-add-douanes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CONFIG SAVE
+// ══════════════════════════════════════════════
+function saveConfig() {
+  const url = document.getElementById('setup-url').value.trim();
+  const role = document.getElementById('setup-role').value;
+  const name = document.getElementById('setup-name').value.trim();
+  if (!url) { toast('Entre l\'URL Apps Script'); return; }
+  config = { url, role, name };
+  localStorage.setItem('stock_config', JSON.stringify(config));
+  applyRole();
+  goTo('overview', document.querySelector('.nav-item'));
+  syncAll();
+}
+
+// ══════════════════════════════════════════════
+//  GOOGLE SHEETS SYNC
+// ══════════════════════════════════════════════
+async function syncAll() {
+  if (!config.url) return;
+  const btn = document.getElementById('btn-sync');
+  btn.classList.add('loading');
+  btn.textContent = '↻ Sync…';
+  try {
+    const res = await fetch(config.url);
+    const json = await res.json();
+    if (json.ok && json.data && Object.keys(json.data).length > 0) {
+      data = { ...data, ...json.data };
+    }
+    setConnStatus(true);
+    document.getElementById('last-sync-label').textContent =
+      'Dernière sync : ' + new Date().toLocaleTimeString('fr-FR');
+    renderAll();
+  } catch(e) {
+    setConnStatus(false);
+    toast('Erreur de connexion — vérifiez l\'URL');
+  }
+  btn.classList.remove('loading');
+  btn.textContent = '↻ Actualiser';
+}
+
+async function pushData() {
+  if (!config.url) { renderAll(); return; }
+  try {
+    await fetch(config.url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    toast('Sauvegardé ✓');
+    setConnStatus(true);
+  } catch(e) {
+    toast('Erreur de sauvegarde');
+    setConnStatus(false);
+  }
+}
+
+function setConnStatus(ok) {
+  const dot = document.getElementById('conn-dot');
+  const lbl = document.getElementById('conn-label');
+  dot.className = 'conn-dot ' + (ok ? 'ok' : 'err');
+  lbl.textContent = ok ? 'Connecté' : 'Hors ligne';
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,j] = d.split('-');
+  return `${j}/${m}/${y}`;
+}
+function extrait(qty, brix) {
+  return Math.round(qty * (brix / 100) * FACTEUR);
+}
+function expStatus(d) {
+  if (!d) return 'ok';
+  const diff = (new Date(d) - new Date()) / 86400000;
+  return diff < 0 ? 'danger' : diff < 30 ? 'warn' : 'ok';
+}
+function chip(status, labels) {
+  const map = {
+    ok: ['chip-ok', labels[0] || 'OK'],
+    warn: ['chip-warn', labels[1] || 'Attention'],
+    danger: ['chip-danger', labels[2] || 'Critique']
+  };
+  const [cls, lbl] = map[status] || map.ok;
+  return `<span class="chip ${cls}">${lbl}</span>`;
+}
+function chipStock(qty, seuil) {
+  if (qty <= 0) return chip('danger', ['','','Épuisé']);
+  if (qty < seuil) return chip('warn', ['','Faible','']);
+  return chip('ok', ['OK','','']);
+}
+function daysSince(d) {
+  if (!d) return 0;
+  return Math.round((new Date() - new Date(d)) / 86400000);
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderOverview();
+  renderTubercules();
+  renderUsine();
+  renderTransit();
+  renderDouanes();
+  renderPrestas();
+  renderSkus();
+  updateNavBadges();
+}
+
+function renderOverview() {
+  const seuilUsine = parseFloat(document.getElementById('seuil-usine').value) || 500;
+  const totTuber = data.tubercules.reduce((a,t) => a + (t.qty||0), 0);
+  const totExtrait = data.tubercules.reduce((a,t) => a + extrait(t.qty||0, t.brix||0), 0);
+  const totUsine = data.usine.reduce((a,s) => a + (s.vol||0), 0);
+  const totTransit = data.transit.reduce((a,s) => a + (s.vol||0), 0);
+  const totDouanes = data.douanes.reduce((a,s) => a + (s.vol||0), 0);
+  const totVrac = Object.values(data.prestas).reduce((a,p) => a + (p.bio||0) + (p.nonbio||0), 0);
+  const allSkus = [...(data.skus.crosslog||[]), ...(data.skus.idlog||[]), ...(data.skus.gms||[])];
+  const skuAlert = allSkus.filter(s => s.qty < (s.seuil||50)).length;
+
+  document.getElementById('overview-metrics').innerHTML = `
+    <div class="metric accent"><div class="metric-label">Tubercules</div><div class="metric-value">${totTuber.toLocaleString('fr-FR')} kg</div><div class="metric-sub">${data.tubercules.length} lot(s)</div></div>
+    <div class="metric"><div class="metric-label">Sirop extractible</div><div class="metric-value">${totExtrait.toLocaleString('fr-FR')} kg</div><div class="metric-sub">facteur ${FACTEUR} × BRIX</div></div>
+    <div class="metric ${totUsine<seuilUsine?'danger':''}"><div class="metric-label">Sirop usine</div><div class="metric-value">${totUsine.toLocaleString('fr-FR')} kg</div><div class="metric-sub">${data.usine.length} lot(s)</div></div>
+    <div class="metric"><div class="metric-label">En transit</div><div class="metric-value">${totTransit.toLocaleString('fr-FR')} kg</div></div>
+    <div class="metric ${totDouanes>0?'warn':''}"><div class="metric-label">Douanes</div><div class="metric-value">${totDouanes.toLocaleString('fr-FR')} kg</div></div>
+    <div class="metric"><div class="metric-label">VRAC prestas</div><div class="metric-value">${totVrac.toLocaleString('fr-FR')} kg</div></div>
+    <div class="metric ${skuAlert>0?'warn':''}"><div class="metric-label">SKUs en alerte</div><div class="metric-value">${skuAlert}</div></div>
+  `;
+
+  let alerts = '';
+  if (totUsine < seuilUsine) alerts += `<div class="alert-strip danger">Stock sirop usine sous le seuil (${seuilUsine} kg) — actuel : <strong>${totUsine.toLocaleString('fr-FR')} kg</strong></div>`;
+  if (totDouanes > 0) alerts += `<div class="alert-strip">${totDouanes.toLocaleString('fr-FR')} kg de sirop actuellement bloqués en douanes</div>`;
+  if (skuAlert > 0) alerts += `<div class="alert-strip">${skuAlert} SKU(s) en stock faible ou épuisé</div>`;
+  const expiring = data.tubercules.filter(t => expStatus(t.exp) !== 'ok').length;
+  if (expiring > 0) alerts += `<div class="alert-strip">${expiring} lot(s) de tubercules expirent bientôt ou sont périmés</div>`;
+  document.getElementById('global-alerts').innerHTML = alerts;
+
+  document.getElementById('ov-tubercules').innerHTML = data.tubercules.slice(0,3).map(t =>
+    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span class="cell-mono">${t.lot}</span><span>${(t.qty||0).toLocaleString('fr-FR')} kg — BRIX ${(t.brix||0).toFixed(1)}%</span></div>`
+  ).join('') + (data.tubercules.length > 3 ? `<div style="color:var(--text-hint);font-size:11px;padding-top:6px">+${data.tubercules.length-3} lots…</div>` : '');
+
+  document.getElementById('ov-sirop').innerHTML = `
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Usine</span><span style="font-weight:600">${totUsine.toLocaleString('fr-FR')} kg</span></div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Transit</span><span style="font-weight:600">${totTransit.toLocaleString('fr-FR')} kg</span></div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Douanes</span><span style="font-weight:600;color:${totDouanes>0?'var(--amber)':'inherit'}">${totDouanes.toLocaleString('fr-FR')} kg</span></div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0"><span>VRAC prestas</span><span style="font-weight:600">${totVrac.toLocaleString('fr-FR')} kg</span></div>
+  `;
+}
+
+function renderTubercules() {
+  const expiring = data.tubercules.filter(t => expStatus(t.exp) !== 'ok').length;
+  document.getElementById('alerts-tuber').innerHTML = expiring > 0
+    ? `<div class="alert-strip">${expiring} lot(s) expirent bientôt ou sont périmés</div>` : '';
+  document.getElementById('tb-tuber').innerHTML = data.tubercules.map((t,i) => `
+    <tr>
+      <td class="cell-mono cell-strong">${t.lot||'—'}</td>
+      <td>${t.loc||'—'}</td>
+      <td>${(t.qty||0).toLocaleString('fr-FR')}</td>
+      <td>${(t.brix||0).toFixed(1)}</td>
+      <td class="cell-strong">${extrait(t.qty||0,t.brix||0).toLocaleString('fr-FR')} kg</td>
+      <td>${fmt(t.rec)}</td>
+      <td>${fmt(t.exp)}</td>
+      <td>${chip(expStatus(t.exp),['OK','Bientôt','Périmé'])}</td>
+    </tr>`).join('');
+}
+
+function renderUsine() {
+  const seuilUsine = parseFloat(document.getElementById('seuil-usine').value) || 500;
+  const tot = data.usine.reduce((a,s) => a+(s.vol||0), 0);
+  document.getElementById('alerts-usine').innerHTML = tot < seuilUsine
+    ? `<div class="alert-strip danger">Stock total (${tot.toLocaleString('fr-FR')} kg) sous le seuil de ${seuilUsine} kg</div>` : '';
+  document.getElementById('tb-usine').innerHTML = data.usine.map(s => `
+    <tr>
+      <td class="cell-mono cell-strong">${s.lot||'—'}</td>
+      <td>${(s.vol||0).toLocaleString('fr-FR')}</td>
+      <td>${fmt(s.prod)}</td>
+      <td class="cell-mono">${s.ori||'—'}</td>
+      <td>${chipStock(s.vol||0, 300)}</td>
+    </tr>`).join('');
+}
+
+function renderTransit() {
+  document.getElementById('tb-transit').innerHTML = data.transit.map(s => `
+    <tr>
+      <td class="cell-mono cell-strong">${s.lot||'—'}</td>
+      <td>${(s.vol||0).toLocaleString('fr-FR')}</td>
+      <td>${fmt(s.dep)}</td>
+      <td>${fmt(s.arr)}</td>
+      <td>${s.trans||'—'}</td>
+      <td><span class="chip chip-blue">En cours</span></td>
+    </tr>`).join('');
+}
+
+function renderDouanes() {
+  document.getElementById('tb-douanes').innerHTML = data.douanes.map(s => `
+    <tr>
+      <td class="cell-mono cell-strong">${s.lot||'—'}</td>
+      <td>${(s.vol||0).toLocaleString('fr-FR')}</td>
+      <td>${fmt(s.date)}</td>
+      <td>${s.pays||'—'}</td>
+      <td style="color:var(--text-muted)">${s.motif||'—'}</td>
+      <td>${chip(daysSince(s.date)>14?'danger':daysSince(s.date)>7?'warn':'ok',
+        [daysSince(s.date)+' j',daysSince(s.date)+' j ⚠',daysSince(s.date)+' j !!'])}</td>
+    </tr>`).join('');
+}
+
+function renderPrestas() {
+  document.getElementById('prestas-grid').innerHTML = Object.entries(data.prestas).map(([name, p]) => {
+    const isPot = name === 'Noiseraie';
+    const sz = isPot ? POT_G : SQUEEZE_G;
+    const unite = isPot ? 'pots (220g)' : 'squeezes (235g)';
+    const sqBio = Math.floor((p.bio||0) / sz);
+    const sqNonBio = Math.floor((p.nonbio||0) / sz);
+    return `<div class="presta-card">
+      <div class="presta-name">○ ${name}</div>
+      <div class="presta-row"><span>VRAC bio</span><span class="presta-val">${(p.bio||0).toLocaleString('fr-FR')} kg</span></div>
+      ${!isPot ? `<div class="presta-row"><span>VRAC non-bio</span><span class="presta-val">${(p.nonbio||0).toLocaleString('fr-FR')} kg</span></div>` : ''}
+      <div class="presta-row"><span>≈ ${unite} bio</span><span class="presta-val">${sqBio.toLocaleString('fr-FR')}</span></div>
+      ${!isPot ? `<div class="presta-row"><span>≈ ${unite} non-bio</span><span class="presta-val">${sqNonBio.toLocaleString('fr-FR')}</span></div>` : ''}
+      <div class="presta-row" style="font-weight:600"><span>Total VRAC</span><span class="presta-val">${((p.bio||0)+(p.nonbio||0)).toLocaleString('fr-FR')} kg</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSkus() {
+  ['crosslog','idlog','gms'].forEach(dest => {
+    document.getElementById('tb-'+dest).innerHTML = (data.skus[dest]||[]).map(s => `
+      <tr>
+        <td class="cell-mono">${s.code||'—'}</td>
+        <td>${s.label||'—'}</td>
+        <td class="cell-strong">${(s.qty||0).toLocaleString('fr-FR')}</td>
+        <td style="color:var(--text-muted)">${s.seuil||50}</td>
+        <td>${chipStock(s.qty||0, s.seuil||50)}</td>
+      </tr>`).join('');
+  });
+}
+
+function updateNavBadges() {
+  const douanes = data.douanes.length;
+  const el = document.getElementById('nav-douanes');
+  if (douanes > 0) {
+    if (!el.querySelector('.nav-badge')) el.insertAdjacentHTML('beforeend', `<span class="nav-badge" id="douanes-badge">${douanes}</span>`);
+    else el.querySelector('.nav-badge').textContent = douanes;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  MODALS & SAVE
+// ══════════════════════════════════════════════
+function openModal(id, dest) {
+  document.getElementById(id).classList.add('open');
+  if (dest) {
+    document.getElementById('sku-dest').value = dest;
+    const titles = {crosslog:'▷ Nouveau SKU — Crosslog', idlog:'▷ Nouveau SKU — ID Log', gms:'▷ Nouveau SKU — GMS'};
+    document.getElementById('sku-modal-title').textContent = titles[dest] || 'Nouveau SKU';
+  }
+  if (id === 'm-presta') {
+    const prNames = {tgf:'The Good Food', carapack:'Carapack', noiseraie:'Noiseraie'};
+    if (config.role && prNames[config.role]) {
+      document.getElementById('pr-name').value = prNames[config.role];
+      document.getElementById('pr-name').disabled = config.role !== 'admin';
+    }
+  }
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function save(type) {
+  if (type === 'tubercules') {
+    const lot = document.getElementById('t-lot').value.trim();
+    const qty = parseFloat(document.getElementById('t-qty').value);
+    const brix = parseFloat(document.getElementById('t-brix').value);
+    if (!lot || !qty || !brix) { toast('Remplis les champs obligatoires'); return; }
+    data.tubercules.push({
+      lot, loc: document.getElementById('t-loc').value.trim()||'—',
+      qty, brix,
+      rec: document.getElementById('t-rec').value,
+      exp: document.getElementById('t-exp').value
+    });
+    closeModal('m-tuber');
+    ['t-lot','t-loc','t-qty','t-brix','t-rec','t-exp'].forEach(id => document.getElementById(id).value='');
+  }
+  else if (type === 'usine') {
+    const lot = document.getElementById('u-lot').value.trim();
+    const vol = parseFloat(document.getElementById('u-vol').value);
+    if (!lot || !vol) { toast('Remplis les champs obligatoires'); return; }
+    data.usine.push({
+      lot, vol,
+      prod: document.getElementById('u-prod').value,
+      ori: document.getElementById('u-ori').value.trim()
+    });
+    closeModal('m-usine');
+    ['u-lot','u-vol','u-prod','u-ori'].forEach(id => document.getElementById(id).value='');
+  }
+  else if (type === 'transit') {
+    const lot = document.getElementById('tr-lot').value.trim();
+    const vol = parseFloat(document.getElementById('tr-vol').value);
+    if (!lot || !vol) { toast('Remplis les champs obligatoires'); return; }
+    data.transit.push({
+      lot, vol,
+      dep: document.getElementById('tr-dep').value,
+      arr: document.getElementById('tr-arr').value,
+      trans: document.getElementById('tr-trans').value.trim()
+    });
+    closeModal('m-transit');
+    ['tr-lot','tr-vol','tr-dep','tr-arr','tr-trans'].forEach(id => document.getElementById(id).value='');
+  }
+  else if (type === 'douanes') {
+    const lot = document.getElementById('d-lot').value.trim();
+    const vol = parseFloat(document.getElementById('d-vol').value);
+    if (!lot || !vol) { toast('Remplis les champs obligatoires'); return; }
+    data.douanes.push({
+      lot, vol,
+      date: document.getElementById('d-date').value,
+      pays: document.getElementById('d-pays').value.trim(),
+      motif: document.getElementById('d-motif').value.trim()
+    });
+    closeModal('m-douanes');
+    ['d-lot','d-vol','d-date','d-pays','d-motif'].forEach(id => document.getElementById(id).value='');
+  }
+  else if (type === 'presta') {
+    const name = document.getElementById('pr-name').value;
+    data.prestas[name] = {
+      bio: parseFloat(document.getElementById('pr-bio').value)||0,
+      nonbio: parseFloat(document.getElementById('pr-nonbio').value)||0
+    };
+    closeModal('m-presta');
+    document.getElementById('pr-bio').value='0';
+    document.getElementById('pr-nonbio').value='0';
+  }
+  else if (type === 'sku') {
+    const dest = document.getElementById('sku-dest').value;
+    const code = document.getElementById('sku-code').value.trim();
+    const label = document.getElementById('sku-label').value.trim();
+    if (!code || !label) { toast('Remplis les champs obligatoires'); return; }
+    if (!data.skus[dest]) data.skus[dest] = [];
+    data.skus[dest].push({
+      code, label,
+      qty: parseFloat(document.getElementById('sku-qty').value)||0,
+      seuil: parseFloat(document.getElementById('sku-seuil').value)||50
+    });
+    closeModal('m-sku');
+    ['sku-code','sku-label','sku-qty','sku-seuil'].forEach(id => document.getElementById(id).value='');
+  }
+  pushData();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  APPS SCRIPT MODAL
+// ══════════════════════════════════════════════
+function showScriptCode() {
+  document.getElementById('script-code-display').value = APPS_SCRIPT;
+  document.getElementById('script-modal').classList.add('open');
+}
+function closeScriptModal() {
+  document.getElementById('script-modal').classList.remove('open');
+}
+function copyScript() {
+  navigator.clipboard.writeText(APPS_SCRIPT).then(() => toast('Script copié !'));
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Fermer modals en cliquant à côté
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+init();
+</script>
+</body>
+</html>
