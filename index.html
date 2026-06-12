@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0062)file:///Users/marie-alixlemee/Downloads/stock-dashboard_6.html -->
-<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tableau de bord — Stocks</title>
 <style>
@@ -423,10 +423,10 @@
   <div class="logo"><div class="logo-dot"></div> Stock Dashboard</div>
   <div class="header-right">
     <div class="conn-status">
-      <div class="conn-dot ok" id="conn-dot"></div>
-      <span id="conn-label">Connecté</span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label">Non connecté</span>
     </div>
-    <span class="role-badge" id="role-display">Marie-Alix</span>
+    <span class="role-badge" id="role-display">—</span>
     <button class="btn-sync" id="btn-sync" onclick="syncAll()">↻ Actualiser</button>
     <button class="btn" onclick="openSetup()">⚙ Config</button>
   </div>
@@ -436,27 +436,27 @@
   <nav id="sidebar">
     <div class="nav-section">
       <div class="nav-label">Vue d'ensemble</div>
-      <div class="nav-item" onclick="goTo(&#39;overview&#39;,this)"><span class="nav-icon">◈</span> Tableau de bord</div>
+      <div class="nav-item active" onclick="goTo('overview',this)"><span class="nav-icon">◈</span> Tableau de bord</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Matière première</div>
-      <div class="nav-item" onclick="goTo(&#39;tubercules&#39;,this)"><span class="nav-icon">✿</span> Tubercules Pérou</div>
-      <div class="nav-item" onclick="goTo(&#39;sirop-usine&#39;,this)"><span class="nav-icon">⬡</span> Sirop — Usine</div>
+      <div class="nav-item" onclick="goTo('tubercules',this)"><span class="nav-icon">✿</span> Tubercules Pérou</div>
+      <div class="nav-item" onclick="goTo('sirop-usine',this)"><span class="nav-icon">⬡</span> Sirop — Usine</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Logistique</div>
-      <div class="nav-item" onclick="goTo(&#39;transit&#39;,this)"><span class="nav-icon">→</span> En transit</div>
-      <div class="nav-item" onclick="goTo(&#39;douanes&#39;,this)" id="nav-douanes"><span class="nav-icon">⊡</span> Douanes</div>
+      <div class="nav-item" onclick="goTo('transit',this)"><span class="nav-icon">→</span> En transit</div>
+      <div class="nav-item" onclick="goTo('douanes',this)" id="nav-douanes"><span class="nav-icon">⊡</span> Douanes</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Prestataires</div>
-      <div class="nav-item" onclick="goTo(&#39;prestas&#39;,this)"><span class="nav-icon">○</span> VRAC Prestas</div>
+      <div class="nav-item" onclick="goTo('prestas',this)"><span class="nav-icon">○</span> VRAC Prestas</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Produits finis</div>
-      <div class="nav-item" onclick="goTo(&#39;crosslog&#39;,this)"><span class="nav-icon">▷</span> Crosslog (E-com)</div>
-      <div class="nav-item" onclick="goTo(&#39;idlog&#39;,this)"><span class="nav-icon">▷</span> ID Log</div>
-      <div class="nav-item" onclick="goTo(&#39;gms&#39;,this)"><span class="nav-icon">▷</span> GMS</div>
+      <div class="nav-item" onclick="goTo('crosslog',this)"><span class="nav-icon">▷</span> Crosslog (E-com)</div>
+      <div class="nav-item" onclick="goTo('idlog',this)"><span class="nav-icon">▷</span> ID Log</div>
+      <div class="nav-item" onclick="goTo('gms',this)"><span class="nav-icon">▷</span> GMS</div>
     </div>
   </nav>
 
@@ -493,7 +493,7 @@
       <div class="modal-box" style="max-width:680px">
         <div class="modal-title">Script Google Apps Script — à coller dans ton Sheet</div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Extensions → Apps Script → colle ce code → Déployer → Nouveau déploiement → App Web → Tout le monde</p>
-        <textarea id="script-code-display" style="width:100%;height:340px;font-family:&#39;DM Mono&#39;,monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;resize:none;color:var(--text)" readonly=""></textarea>
+        <textarea id="script-code-display" style="width:100%;height:340px;font-family:'DM Mono',monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;resize:none;color:var(--text)" readonly></textarea>
         <div class="form-actions">
           <button class="btn" onclick="copyScript()">Copier le script</button>
           <button class="btn-primary btn" onclick="closeScriptModal()">Fermer</button>
@@ -504,31 +504,18 @@
     <!-- OVERVIEW -->
     <div id="overview" class="page">
       <div class="page-header">
-        <div><div class="page-title">Vue d'ensemble</div><div class="page-sub" id="last-sync-label">Dernière sync : 11:09:41</div></div>
+        <div><div class="page-title">Vue d'ensemble</div><div class="page-sub" id="last-sync-label">—</div></div>
       </div>
-      <div id="global-alerts"><div class="alert-strip danger">Stock sirop usine sous le seuil (500 kg) — actuel : <strong>0 kg</strong></div></div>
-      <div class="metrics" id="overview-metrics">
-    <div class="metric accent"><div class="metric-label">Tubercules</div><div class="metric-value">0 kg</div><div class="metric-sub">0 lot(s)</div></div>
-    <div class="metric"><div class="metric-label">Sirop extractible</div><div class="metric-value">0 kg</div><div class="metric-sub">facteur 0.65 × BRIX</div></div>
-    <div class="metric danger"><div class="metric-label">Sirop usine</div><div class="metric-value">0 kg</div><div class="metric-sub">0 lot(s)</div></div>
-    <div class="metric"><div class="metric-label">En transit</div><div class="metric-value">0 kg</div></div>
-    <div class="metric "><div class="metric-label">Douanes</div><div class="metric-value">0 kg</div></div>
-    <div class="metric"><div class="metric-label">VRAC prestas</div><div class="metric-value">0 kg</div></div>
-    <div class="metric "><div class="metric-label">SKUs en alerte</div><div class="metric-value">0</div></div>
-  </div>
+      <div id="global-alerts"></div>
+      <div class="metrics" id="overview-metrics"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
         <div class="card">
           <div class="card-head"><div class="card-title">✿ Tubercules Pérou</div></div>
-          <div class="card-body"><div id="ov-tubercules" style="padding:1rem;font-size:13px;color:var(--text-muted)"></div></div>
+          <div class="card-body"><div id="ov-tubercules" style="padding:1rem;font-size:13px;color:var(--text-muted)">Chargement…</div></div>
         </div>
         <div class="card">
           <div class="card-head"><div class="card-title">⬡ Sirop en circulation</div></div>
-          <div class="card-body"><div id="ov-sirop" style="padding:1rem;font-size:13px;color:var(--text-muted)">
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Usine</span><span style="font-weight:600">0 kg</span></div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Transit</span><span style="font-weight:600">0 kg</span></div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>Douanes</span><span style="font-weight:600;color:inherit">0 kg</span></div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0"><span>VRAC prestas</span><span style="font-weight:600">0 kg</span></div>
-  </div></div>
+          <div class="card-body"><div id="ov-sirop" style="padding:1rem;font-size:13px;color:var(--text-muted)">Chargement…</div></div>
         </div>
       </div>
     </div>
@@ -537,7 +524,7 @@
     <div id="tubercules" class="page">
       <div class="page-header">
         <div><div class="page-title">✿ Tubercules — Pérou</div><div class="page-sub">Stock brut + sirop extractible estimé (facteur 0,65 × BRIX)</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-tuber&#39;)" id="btn-add-tuber">+ Ajouter un lot</button>
+        <button class="btn btn-primary" onclick="openModal('m-tuber')" id="btn-add-tuber">+ Ajouter un lot</button>
       </div>
       <div id="alerts-tuber"></div>
       <div class="card">
@@ -557,9 +544,9 @@
     <div id="sirop-usine" class="page">
       <div class="page-header">
         <div><div class="page-title">⬡ Sirop — Usine</div><div class="page-sub">Stocks disponibles sur site de production</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-usine&#39;)" id="btn-add-usine">+ Ajouter un lot</button>
+        <button class="btn btn-primary" onclick="openModal('m-usine')" id="btn-add-usine">+ Ajouter un lot</button>
       </div>
-      <div id="alerts-usine"><div class="alert-strip danger">Stock total (0 kg) sous le seuil de 500 kg</div></div>
+      <div id="alerts-usine"></div>
       <div class="card">
         <div class="seuil-row">
           Alerte si stock total &lt; <input type="number" id="seuil-usine" value="500" min="0" onchange="renderAll()"> kg
@@ -577,7 +564,7 @@
     <div id="transit" class="page">
       <div class="page-header">
         <div><div class="page-title">→ Sirop en transit</div><div class="page-sub">Lots en cours d'acheminement</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-transit&#39;)" id="btn-add-transit">+ Ajouter</button>
+        <button class="btn btn-primary" onclick="openModal('m-transit')" id="btn-add-transit">+ Ajouter</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
         <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Départ</th><th>Arrivée est.</th><th>Transporteur</th><th>Document</th><th>Statut</th></tr></thead>
@@ -589,7 +576,7 @@
     <div id="douanes" class="page">
       <div class="page-header">
         <div><div class="page-title">⊡ Sirop bloqué — Douanes</div><div class="page-sub">Lots en attente de dédouanement</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-douanes&#39;)" id="btn-add-douanes">+ Ajouter</button>
+        <button class="btn btn-primary" onclick="openModal('m-douanes')" id="btn-add-douanes">+ Ajouter</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
         <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Bloqué le</th><th>Pays</th><th>Motif</th><th>Jours bloqués</th></tr></thead>
@@ -601,91 +588,11 @@
     <div id="prestas" class="page">
       <div class="page-header">
         <div><div class="page-title">○ VRAC chez les prestataires</div><div class="page-sub">The Good Food · Carapack · Noiseraie — avec conversion en unités</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-presta&#39;)" id="btn-add-presta">↑ Mettre à jour</button>
+        <button class="btn btn-primary" onclick="openModal('m-presta')" id="btn-add-presta">↑ Mettre à jour</button>
       </div>
       <div class="card">
         <div class="card-head" style="border-bottom:none"><div class="card-title" style="font-size:11px;color:var(--text-hint);font-weight:400">Conversions : The Good Food &amp; Carapack — 1 squeeze = 235 g &nbsp;·&nbsp; Noiseraie — 1 pot = 220 g</div></div>
-        <div class="presta-grid" id="prestas-grid"><div class="presta-card">
-    <div class="presta-name">○ The Good Food</div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Bio</div>
-    <div class="presta-row">
-    <span>VRAC Bio Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Bio Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Conventionnel</div>
-    <div class="presta-row">
-    <span>VRAC Conv. Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Conv. Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Arôme Vanille (ref séparée)</div>
-    <div class="presta-row">
-    <span>Arôme Vanille Bio</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>Arôme Vanille Non-Bio</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row" style="font-weight:600;margin-top:4px"><span>Total VRAC</span><span class="presta-val">0 kg</span></div>
-  </div><div class="presta-card">
-    <div class="presta-name">○ Carapack</div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Bio</div>
-    <div class="presta-row">
-    <span>VRAC Bio Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Bio Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Conventionnel</div>
-    <div class="presta-row">
-    <span>VRAC Conv. Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Conv. Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row" style="font-weight:600;margin-top:4px"><span>Total VRAC</span><span class="presta-val">0 kg</span></div>
-  </div><div class="presta-card">
-    <div class="presta-name">○ Noiseraie</div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Bio</div>
-    <div class="presta-row">
-    <span>VRAC Nature Bio</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 pots</span></span>
-  </div>
-    <div class="presta-row" style="font-weight:600;margin-top:4px"><span>Total VRAC</span><span class="presta-val">0 kg</span></div>
-  </div><div class="presta-card">
-    <div class="presta-name">○ RCT2 Pérou</div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Bio</div>
-    <div class="presta-row">
-    <span>VRAC Bio Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Bio Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px">Conventionnel</div>
-    <div class="presta-row">
-    <span>VRAC Conv. Nature</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row">
-    <span>VRAC Conv. Vanille</span>
-    <span class="presta-val">0 kg <span style="color:var(--text-hint);font-weight:400;font-size:11px">≈ 0 squeezes</span></span>
-  </div>
-    <div class="presta-row" style="font-weight:600;margin-top:4px"><span>Total VRAC</span><span class="presta-val">0 kg</span></div>
-  </div></div>
+        <div class="presta-grid" id="prestas-grid"></div>
       </div>
     </div>
 
@@ -693,7 +600,7 @@
     <div id="crosslog" class="page">
       <div class="page-header">
         <div><div class="page-title">▷ E-commerce — Crosslog</div><div class="page-sub">Stock disponible pour les commandes en ligne</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-sku&#39;,&#39;crosslog&#39;)">+ Ajouter un SKU</button>
+        <button class="btn btn-primary" onclick="openModal('m-sku','crosslog')">+ Ajouter un SKU</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
         <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
@@ -705,7 +612,7 @@
     <div id="idlog" class="page">
       <div class="page-header">
         <div><div class="page-title">▷ ID Log — Tous SKUs</div><div class="page-sub">Ensemble des références en stock logistique</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-sku&#39;,&#39;idlog&#39;)">+ Ajouter un SKU</button>
+        <button class="btn btn-primary" onclick="openModal('m-sku','idlog')">+ Ajouter un SKU</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
         <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
@@ -717,7 +624,7 @@
     <div id="gms" class="page">
       <div class="page-header">
         <div><div class="page-title">▷ GMS — Produits phares</div><div class="page-sub">Références disponibles pour la grande distribution</div></div>
-        <button class="btn btn-primary" onclick="openModal(&#39;m-sku&#39;,&#39;gms&#39;)">+ Ajouter un SKU</button>
+        <button class="btn btn-primary" onclick="openModal('m-sku','gms')">+ Ajouter un SKU</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
         <thead><tr><th>SKU</th><th>Désignation</th><th>Qté dispo</th><th>Seuil alerte</th><th>Statut</th></tr></thead>
@@ -744,8 +651,8 @@
       <div class="form-row"><label>Péremption</label><input type="date" id="t-exp"></div>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-tuber&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;tubercules&#39;)">Ajouter</button>
+      <button class="btn" onclick="closeModal('m-tuber')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('tubercules')">Ajouter</button>
     </div>
   </div>
 </div>
@@ -761,8 +668,8 @@
       <div class="form-row"><label>Origine tubercule</label><input type="text" id="u-ori" placeholder="LOT-PER-001"></div>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-usine&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;usine&#39;)">Ajouter</button>
+      <button class="btn" onclick="closeModal('m-usine')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('usine')">Ajouter</button>
     </div>
   </div>
 </div>
@@ -771,7 +678,7 @@
   <div class="modal-box" style="max-width:500px"><div class="modal-title">→ Lot en transit</div>
 
     <!-- Zone upload PDF -->
-    <div id="pdf-upload-zone" style="border:2px dashed var(--border-strong);border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem;cursor:pointer;transition:all .15s" onclick="document.getElementById(&#39;pdf-file-input&#39;).click()" ondragover="event.preventDefault();this.style.borderColor=&#39;var(--accent)&#39;" ondragleave="this.style.borderColor=&#39;var(--border-strong)&#39;" ondrop="handlePdfDrop(event)">
+    <div id="pdf-upload-zone" style="border:2px dashed var(--border-strong);border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem;cursor:pointer;transition:all .15s" onclick="document.getElementById('pdf-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border-strong)'" ondrop="handlePdfDrop(event)">
       <div style="font-size:22px;margin-bottom:6px">📄</div>
       <div style="font-size:13px;font-weight:500;color:var(--text)">Glisse ton PL ou BL ici</div>
       <div style="font-size:11px;color:var(--text-hint);margin-top:3px">ou clique pour choisir un fichier PDF</div>
@@ -791,13 +698,13 @@
     <div class="form-row" id="tr-doc-row" style="display:none">
       <label>Document lié</label>
       <div style="display:flex;align-items:center;gap:8px">
-        <input type="text" id="tr-doc-name" readonly="" style="background:var(--accent-light);color:var(--accent);font-size:11px">
-        <a id="tr-doc-link" href="file:///Users/marie-alixlemee/Downloads/stock-dashboard_6.html#" target="_blank" style="font-size:11px;color:var(--accent);white-space:nowrap">Voir ↗</a>
+        <input type="text" id="tr-doc-name" readonly style="background:var(--accent-light);color:var(--accent);font-size:11px">
+        <a id="tr-doc-link" href="#" target="_blank" style="font-size:11px;color:var(--accent);white-space:nowrap">Voir ↗</a>
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-transit&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;transit&#39;)">Ajouter</button>
+      <button class="btn" onclick="closeModal('m-transit')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('transit')">Ajouter</button>
     </div>
   </div>
 </div>
@@ -814,8 +721,8 @@
     </div>
     <div class="form-row"><label>Motif / note</label><input type="text" id="d-motif" placeholder="Contrôle phytosanitaire…"></div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-douanes&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;douanes&#39;)">Ajouter</button>
+      <button class="btn" onclick="closeModal('m-douanes')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('douanes')">Ajouter</button>
     </div>
   </div>
 </div>
@@ -857,8 +764,8 @@
       <div class="form-row"><label>VRAC Nature Bio (kg)</label><input type="number" id="pr-noiNat" min="0" value="0"></div>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-presta&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;presta&#39;)">Mettre à jour</button>
+      <button class="btn" onclick="closeModal('m-presta')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('presta')">Mettre à jour</button>
     </div>
   </div>
 </div>
@@ -875,8 +782,8 @@
       <div class="form-row"><label>Seuil d'alerte</label><input type="number" id="sku-seuil" min="0" placeholder="100"></div>
     </div>
     <div class="form-actions">
-      <button class="btn" onclick="closeModal(&#39;m-sku&#39;)">Annuler</button>
-      <button class="btn btn-primary" onclick="save(&#39;sku&#39;)">Ajouter</button>
+      <button class="btn" onclick="closeModal('m-sku')">Annuler</button>
+      <button class="btn btn-primary" onclick="save('sku')">Ajouter</button>
     </div>
   </div>
 </div>
@@ -911,6 +818,7 @@ let data = {
 const APPS_SCRIPT = `
 const SHEET_NAME = 'StockData';
 const DRIVE_FOLDER = 'Stock Dashboard — Documents';
+const GEMINI_KEY = 'AQ.Ab8RN6l7yR3i47SxapenyF-vYygJ2XXL44xmGNcAiDPcZxY_8g';
 
 function doGet(e) {
   try {
@@ -928,6 +836,23 @@ function doGet(e) {
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
+
+    // Extraction PDF via Gemini
+    if (payload.action === 'extractPdf') {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_KEY;
+      const body = JSON.stringify({
+        contents: [{
+          parts: [
+            { text: payload.prompt },
+            { inline_data: { mime_type: 'application/pdf', data: payload.base64 } }
+          ]
+        }]
+      });
+      const res = UrlFetchApp.fetch(url, { method: 'post', contentType: 'application/json', payload: body, muteHttpExceptions: true });
+      const json = JSON.parse(res.getContentText());
+      const text = json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts && json.candidates[0].content.parts[0] ? json.candidates[0].content.parts[0].text : '{}';
+      return ContentService.createTextOutput(JSON.stringify({ok:true, text:text})).setMimeType(ContentService.MimeType.JSON);
+    }
 
     // Upload fichier vers Drive
     if (payload.action === 'uploadFile') {
@@ -1553,34 +1478,33 @@ function fileToBase64(file) {
 }
 
 async function extractWithGemini(base64, filename) {
-  const prompt = `Tu es un expert en logistique. Analyse ce document (Packing List ou Bill of Lading) et extrais ces informations en JSON uniquement, sans texte autour :
-{
-  "lot": "numéro de lot ou référence du shipment",
-  "vol": nombre_en_kg_ou_null,
-  "dep": "date départ format YYYY-MM-DD ou null",
-  "arr": "date arrivée estimée format YYYY-MM-DD ou null",
-  "trans": "nom du transporteur ou null"
-}
-Si une info est absente, mets null. Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
+  const prompt = `Tu es un expert en logistique agroalimentaire. Analyse ce Packing List (PL) ou Bill of Lading (BL) et extrais ces informations en JSON uniquement, sans texte autour.
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: 'application/pdf', data: base64 } }
-          ]
-        }]
-      })
-    }
-  );
+Règles d'extraction :
+- "lot" : numéro(s) de facture ou référence du shipment (ex: "E001-20 & E001-21", "BL-2024-001")
+- "vol" : poids net total en kg (cherche "PESO NETO", "Net Weight", "Poids net") — donne uniquement le nombre
+- "dep" : date d'émission du document ou date de départ (format YYYY-MM-DD)
+- "arr" : date d'arrivée estimée si mentionnée (format YYYY-MM-DD), sinon null
+- "trans" : nom du transporteur ou compagnie maritime si mentionné, sinon null
+
+Réponds UNIQUEMENT avec ce JSON, rien d'autre :
+{
+  "lot": "...",
+  "vol": nombre_ou_null,
+  "dep": "YYYY-MM-DD_ou_null",
+  "arr": "YYYY-MM-DD_ou_null",
+  "trans": "..._ou_null"
+}`;
+
+  // On passe par Apps Script pour éviter les problèmes CORS avec la clé AQ.
+  const res = await fetch(config.url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'extractPdf', base64, prompt }),
+    headers: { 'Content-Type': 'text/plain' }
+  });
   const json = await res.json();
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-  const clean = text.replace(/```json|```/g, '').trim();
+  if (!json.ok) throw new Error(json.error);
+  const clean = (json.text || '{}').replace(/```json|```/g, '').trim();
   return JSON.parse(clean);
 }
 
@@ -1602,6 +1526,5 @@ async function uploadToDrive(base64, filename) {
 
 init();
 </script>
-
-
-</body></html>
+</body>
+</html>
