@@ -567,7 +567,7 @@
         <button class="btn btn-primary" onclick="openModal('m-transit')" id="btn-add-transit">+ Ajouter</button>
       </div>
       <div class="card"><div class="card-body tbl-wrap"><table>
-        <thead><tr><th>Lot</th><th>Volume (kg)</th><th>Départ</th><th>Arrivée est.</th><th>Transporteur</th><th>Document</th><th>Statut</th></tr></thead>
+        <thead><tr><th>Réf. transit</th><th>Batch</th><th>Produit</th><th>Poids net (kg)</th><th>Départ</th><th>Arrivée est.</th><th>Transporteur</th><th>Document</th><th>Statut</th></tr></thead>
         <tbody id="tb-transit"></tbody>
       </table></div></div>
     </div>
@@ -675,9 +675,8 @@
 </div>
 
 <div class="modal-backdrop" id="m-transit">
-  <div class="modal-box" style="max-width:500px"><div class="modal-title">→ Lot en transit</div>
+  <div class="modal-box" style="max-width:560px"><div class="modal-title">→ Lot en transit</div>
 
-    <!-- Zone upload PDF -->
     <div id="pdf-upload-zone" style="border:2px dashed var(--border-strong);border-radius:10px;padding:1.25rem;text-align:center;margin-bottom:1rem;cursor:pointer;transition:all .15s" onclick="document.getElementById('pdf-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border-strong)'" ondrop="handlePdfDrop(event)">
       <div style="font-size:22px;margin-bottom:6px">📄</div>
       <div style="font-size:13px;font-weight:500;color:var(--text)">Glisse ton PL ou BL ici</div>
@@ -687,15 +686,21 @@
     <div id="pdf-status" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;display:none"></div>
 
     <div class="form-grid">
-      <div class="form-row"><label>Lot</label><input type="text" id="tr-lot" placeholder="TRANSIT-001"></div>
-      <div class="form-row"><label>Volume (kg)</label><input type="number" id="tr-vol" min="0"></div>
-    </div>
-    <div class="form-grid">
-      <div class="form-row"><label>Date départ</label><input type="date" id="tr-dep"></div>
-      <div class="form-row"><label>Arrivée estimée</label><input type="date" id="tr-arr"></div>
+      <div class="form-row"><label>Réf. transit</label><input type="text" id="tr-lot" placeholder="E001-20 & E001-21"></div>
+      <div class="form-grid" style="gap:8px">
+        <div class="form-row"><label>Départ</label><input type="date" id="tr-dep"></div>
+        <div class="form-row"><label>Arrivée est.</label><input type="date" id="tr-arr"></div>
+      </div>
     </div>
     <div class="form-row"><label>Transporteur</label><input type="text" id="tr-trans" placeholder="CMA-CGM, DHL…"></div>
-    <div class="form-row" id="tr-doc-row" style="display:none">
+
+    <div style="font-size:10px;font-weight:600;color:var(--text-hint);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;display:flex;align-items:center;justify-content:space-between">
+      <span>Produits / lots</span>
+      <button class="btn" style="font-size:11px;padding:3px 8px" onclick="addTransitItem()">+ Ajouter une ligne</button>
+    </div>
+    <div id="tr-items-list"></div>
+
+    <div class="form-row" id="tr-doc-row" style="display:none;margin-top:10px">
       <label>Document lié</label>
       <div style="display:flex;align-items:center;gap:8px">
         <input type="text" id="tr-doc-name" readonly style="background:var(--accent-light);color:var(--accent);font-size:11px">
@@ -1119,16 +1124,24 @@ function renderUsine() {
 }
 
 function renderTransit() {
-  document.getElementById('tb-transit').innerHTML = data.transit.map(s => `
-    <tr>
-      <td class="cell-mono cell-strong">${s.lot||'—'}</td>
-      <td>${(s.vol||0).toLocaleString('fr-FR')}</td>
-      <td>${fmt(s.dep)}</td>
-      <td>${fmt(s.arr)}</td>
-      <td>${s.trans||'—'}</td>
-      <td>${s.docUrl ? `<a href="${s.docUrl}" target="_blank" style="font-size:11px;color:var(--accent);display:flex;align-items:center;gap:3px">📄 ${s.docName||'Voir'} ↗</a>` : '<span style="color:var(--text-hint);font-size:11px">—</span>'}</td>
-      <td><span class="chip chip-blue">En cours</span></td>
-    </tr>`).join('');
+  const rows = [];
+  data.transit.forEach(s => {
+    const items = s.items && s.items.length > 0 ? s.items : [{batch:'—', produit:'—', vol: s.vol||0}];
+    items.forEach((item, i) => {
+      rows.push(`<tr>
+        ${i === 0 ? `<td class="cell-mono cell-strong" rowspan="${items.length}" style="border-right:1px solid var(--border)">${s.lot||'—'}</td>` : ''}
+        <td class="cell-mono">${item.batch||'—'}</td>
+        <td>${item.produit||'—'}</td>
+        <td>${(item.vol||0).toLocaleString('fr-FR')}</td>
+        ${i === 0 ? `<td rowspan="${items.length}">${fmt(s.dep)}</td>
+        <td rowspan="${items.length}">${fmt(s.arr)}</td>
+        <td rowspan="${items.length}">${s.trans||'—'}</td>
+        <td rowspan="${items.length}">${s.docUrl ? `<a href="${s.docUrl}" target="_blank" style="font-size:11px;color:var(--accent)">📄 Voir ↗</a>` : '<span style="color:var(--text-hint);font-size:11px">—</span>'}</td>
+        <td rowspan="${items.length}"><span class="chip chip-blue">En cours</span></td>` : ''}
+      </tr>`);
+    });
+  });
+  document.getElementById('tb-transit').innerHTML = rows.join('');
 }
 
 function renderDouanes() {
@@ -1286,22 +1299,27 @@ function save(type) {
   }
   else if (type === 'transit') {
     const lot = document.getElementById('tr-lot').value.trim();
-    const vol = parseFloat(document.getElementById('tr-vol').value);
-    if (!lot || !vol) { toast('Remplis les champs obligatoires'); return; }
+    if (!lot) { toast('Entre la référence du transit'); return; }
+    const items = [];
+    document.querySelectorAll('.tr-item-row').forEach(row => {
+      const batch   = row.querySelector('.tr-item-batch').value.trim();
+      const produit = row.querySelector('.tr-item-produit').value.trim();
+      const vol     = parseFloat(row.querySelector('.tr-item-vol').value) || 0;
+      if (batch || produit || vol) items.push({batch, produit, vol});
+    });
+    if (items.length === 0) { toast('Ajoute au moins un produit'); return; }
     data.transit.push({
-      lot, vol,
-      dep: document.getElementById('tr-dep').value,
-      arr: document.getElementById('tr-arr').value,
-      trans: document.getElementById('tr-trans').value.trim(),
-      docUrl: document.getElementById('tr-doc-link').href !== '#' ? document.getElementById('tr-doc-link').href : null,
+      lot,
+      vol: items.reduce((a,i) => a + i.vol, 0),
+      items,
+      dep:    document.getElementById('tr-dep').value,
+      arr:    document.getElementById('tr-arr').value,
+      trans:  document.getElementById('tr-trans').value.trim(),
+      docUrl:  document.getElementById('tr-doc-link').href !== '#' ? document.getElementById('tr-doc-link').href : null,
       docName: document.getElementById('tr-doc-name').value || null,
     });
     closeModal('m-transit');
-    ['tr-lot','tr-vol','tr-dep','tr-arr','tr-trans','tr-doc-name'].forEach(id => document.getElementById(id).value='');
-    document.getElementById('tr-doc-link').href='#';
-    document.getElementById('tr-doc-row').style.display='none';
-    document.getElementById('pdf-status').style.display='none';
-    document.getElementById('pdf-upload-zone').style.borderColor='var(--border-strong)';
+    resetTransitModal();
   }
   else if (type === 'douanes') {
     const lot = document.getElementById('d-lot').value.trim();
@@ -1380,7 +1398,43 @@ function toast(msg) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-function updatePrestaModal() {
+function addTransitItem(batch='', produit='', vol='') {
+  const list = document.getElementById('tr-items-list');
+  const div = document.createElement('div');
+  div.className = 'tr-item-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 2fr 1fr auto;gap:6px;margin-bottom:6px;align-items:center';
+  div.innerHTML = `
+    <input type="text" class="tr-item-batch" placeholder="Batch" value="${batch}" style="font-size:12px;border:1px solid var(--border-strong);border-radius:6px;padding:5px 8px;background:var(--bg);font-family:DM Mono,monospace">
+    <input type="text" class="tr-item-produit" placeholder="Produit (ex: Organic Yacon Syrup)" value="${produit}" style="font-size:12px;border:1px solid var(--border-strong);border-radius:6px;padding:5px 8px;background:var(--bg)">
+    <input type="number" class="tr-item-vol" placeholder="kg" value="${vol}" min="0" style="font-size:12px;border:1px solid var(--border-strong);border-radius:6px;padding:5px 8px;background:var(--bg)">
+    <button onclick="this.parentElement.remove()" style="background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px">✕</button>`;
+  list.appendChild(div);
+}
+
+function resetTransitModal() {
+  ['tr-lot','tr-dep','tr-arr','tr-trans','tr-doc-name'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('tr-doc-link').href='#';
+  document.getElementById('tr-doc-row').style.display='none';
+  document.getElementById('pdf-status').style.display='none';
+  document.getElementById('tr-items-list').innerHTML='';
+  const zone = document.getElementById('pdf-upload-zone');
+  zone.style.borderColor='var(--border-strong)';
+  zone.innerHTML = `<div style="font-size:22px;margin-bottom:6px">📄</div>
+    <div style="font-size:13px;font-weight:500;color:var(--text)">Glisse ton PL ou BL ici</div>
+    <div style="font-size:11px;color:var(--text-hint);margin-top:3px">ou clique pour choisir un fichier PDF</div>
+    <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="handlePdfSelect(event)">`;
+  zone.onclick = () => document.getElementById('pdf-file-input').click();
+}
+
+// Ouvrir le modal transit avec une ligne vide par défaut
+const _origOpenModal = openModal;
+function openModal(id, dest) {
+  _origOpenModal(id, dest);
+  if (id === 'm-transit') {
+    document.getElementById('tr-items-list').innerHTML = '';
+    addTransitItem();
+  }
+}
   const name = document.getElementById('pr-name').value;
   const isNoi = name === 'Noiseraie';
   const isTGF = name === 'The Good Food';
@@ -1441,10 +1495,15 @@ async function processPdf(file) {
 
     // 3. Remplir les champs
     if (extracted.lot)   document.getElementById('tr-lot').value   = extracted.lot;
-    if (extracted.vol)   document.getElementById('tr-vol').value   = extracted.vol;
     if (extracted.dep)   document.getElementById('tr-dep').value   = extracted.dep;
     if (extracted.arr)   document.getElementById('tr-arr').value   = extracted.arr;
     if (extracted.trans) document.getElementById('tr-trans').value = extracted.trans;
+
+    // Remplir les lignes produits
+    if (extracted.items && extracted.items.length > 0) {
+      document.getElementById('tr-items-list').innerHTML = '';
+      extracted.items.forEach(item => addTransitItem(item.batch||'', item.produit||'', item.vol||''));
+    }
 
     // 4. Upload vers Google Drive via Apps Script
     status.textContent = '📤 Upload du document…';
@@ -1481,19 +1540,25 @@ async function extractWithGemini(base64, filename) {
   const prompt = `Tu es un expert en logistique agroalimentaire. Analyse ce Packing List (PL) ou Bill of Lading (BL) et extrais ces informations en JSON uniquement, sans texte autour.
 
 Règles d'extraction :
-- "lot" : numéro(s) de facture ou référence du shipment (ex: "E001-20 & E001-21", "BL-2024-001")
-- "vol" : poids net total en kg (cherche "PESO NETO", "Net Weight", "Poids net") — donne uniquement le nombre
+- "lot" : numéro(s) de facture/référence du shipment (ex: "E001-20 & E001-21 & E001-22")
 - "dep" : date d'émission du document ou date de départ (format YYYY-MM-DD)
 - "arr" : date d'arrivée estimée si mentionnée (format YYYY-MM-DD), sinon null
 - "trans" : nom du transporteur ou compagnie maritime si mentionné, sinon null
+- "items" : tableau avec UNE entrée par ligne produit du document :
+  - "batch" : numéro de batch/lot produit (ex: "SY-26090")
+  - "produit" : description courte du produit (ex: "Organic Yacon Syrup", "Conventional Yacon Flour")
+  - "vol" : poids net en kg pour cette ligne (nombre uniquement, cherche "PESO NETO")
 
-Réponds UNIQUEMENT avec ce JSON, rien d'autre :
+Réponds UNIQUEMENT avec ce JSON :
 {
   "lot": "...",
-  "vol": nombre_ou_null,
-  "dep": "YYYY-MM-DD_ou_null",
-  "arr": "YYYY-MM-DD_ou_null",
-  "trans": "..._ou_null"
+  "dep": "YYYY-MM-DD ou null",
+  "arr": "YYYY-MM-DD ou null",
+  "trans": "... ou null",
+  "items": [
+    {"batch": "...", "produit": "...", "vol": nombre},
+    {"batch": "...", "produit": "...", "vol": nombre}
+  ]
 }`;
 
   // On passe par Apps Script pour éviter les problèmes CORS avec la clé AQ.
